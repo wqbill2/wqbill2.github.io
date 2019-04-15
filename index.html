@@ -14,12 +14,13 @@
 </head>
 <body>
 <div class="row" style="margin: 0">
-    <div class="col-8" style="text-align: center">
-        <img id="img" src="">
+    <div class="col-6" style="text-align: center">
+        <img id="img" src="" style="max-width: 100%">
     </div>
-    <div class="col-4 grey" style="padding: 30px">
-        <div id="input">
-        </div>
+    <div class="col-3 grey" style="padding: 30px">
+        <div id="input"></div>
+    </div>
+    <div class="col-3 grey" style="padding: 30px">
         <div id="output"></div>
     </div>
 </div>
@@ -39,8 +40,7 @@
     $(function () {
         parseData(data);
         //input
-        var htmlSidebar = '<br>';
-        htmlSidebar += '<h4 class="white">Inputs</h4>';
+        var htmlSidebar = '<h4 class="white">Inputs</h4>';
         htmlSidebar += '<hr class="whiteLine">';
         for (var i = 0; i < inCategories.length; i++) {
             var name = inCategories[i].substring(3);
