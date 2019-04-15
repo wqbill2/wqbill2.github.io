@@ -7,8 +7,13 @@
 }
 
 html, body {
+    height: 100%;
+}
+
+.row {
     min-height: 100%;
 }
+
 
 .grey {
     background: grey;
