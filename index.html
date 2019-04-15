@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="js/jquery-3.4.0.js"></script>
+    <script src="js/ion.rangeSlider.js"></script>
+    <script src="js/d3.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/main.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.css"/>
+    <link rel="stylesheet" href="css/ion.rangeSlider.css"/>
+    <link rel="stylesheet" href="css/main.css"/>
+</head>
+<body>
+<div class="row" style="margin: 0">
+    <div class="col-8" style="text-align: center">
+        <img id="img" src="">
+    </div>
+    <div class="col-4 grey" style="padding: 30px">
+        <div id="input">
+        </div>
+        <div id="output"></div>
+    </div>
+</div>
+</body>
+<script>
+    var inputs = [];
+    var outputs = [];
+    var inCategories = [];
+    var inValues = [];
+    var outCategories = [];
+    var outValues = [];
+    var minCategories = [];
+    var maxCategories = [];
+    var uniqueCategories = {};
+    var $range = [];
+    var allCategories = data.columns;
+    $(function () {
+        parseData(data);
+        //input
+        var htmlSidebar = '<br>';
+        htmlSidebar += '<h4 class="white">Inputs</h4>';
+        htmlSidebar += '<hr class="whiteLine">';
+        for (var i = 0; i < inCategories.length; i++) {
+            var name = inCategories[i].substring(3);
+            htmlSidebar += '<h6 class="white">' + name + '</h6>' + '<input type="text" class="js-range-slider' + i + '" value="" />' + '<br>';
+        }
+        htmlSidebar += '<br>';
+        document.getElementById("input").innerHTML = htmlSidebar;
+        //slider
+        for (var i = 0; i < inCategories.length; i++) {
+            var currentCat = inCategories[i];
+            var indexCat = allCategories.indexOf(currentCat);
+            var rangeSliderText = ".js-range-slider" + i;
+            $range[i] = $(rangeSliderText);
+            $range[i].ionRangeSlider({
+                type: "single",
+                grid: true,
+                min: minCategories[indexCat],
+                max: maxCategories[indexCat],
+                from: 0,
+                // step: 1,
+                values: uniqueCategories[currentCat],
+                onChange: function () {
+                    triggerUpdate();
+                }
+            });
+        }
+        //output
+        var htmlSidebarOut = '';
+        htmlSidebarOut += '<h4 class="white">Outputs</h4>';
+        htmlSidebarOut += '<hr class="whiteLine">';
+        for (var i = 0; i < outCategories.length; i++) {
+            var subOfCatag = outCategories[i].substring(4);
+            htmlSidebarOut += '<h6 class="white">' + subOfCatag + '<span class="float-right back-red"></span></h6>'
+                + '<svg class="outputDiagram' + i + '"></svg>' + '<br>';
+            htmlSidebarOut += '<h6 class="white"><span>' + minCategories[allCategories.indexOf(outCategories[i])] + '</span>' +
+                '<span class="float-right" ">' + maxCategories[allCategories.indexOf(outCategories[i])] + '</span></h6>'
+        }
+        document.getElementById("output").innerHTML = htmlSidebarOut;
+        //
+        triggerUpdate();
+    });
+
+    function parseData(rawData) {
+        rawData.columns.forEach(function (item) {
+            if (item.includes('out:')) {
+                outCategories.push(item);
+            } else if (item.includes('in:')) {
+                inCategories.push(item);
+            }
+        });
+        getMinMax(rawData);
+        getSteps(rawData)
+    }
+
+    function getMinMax() {
+        data.columns.forEach(function (item) {
+            minCategories.push(Number.MAX_VALUE);
+            maxCategories.push(Number.MIN_VALUE);
+        });
+        data.forEach(function (item) {
+            data.columns.forEach(function (item_c, index_c) {
+                if (minCategories[index_c] > Number(item[item_c])) {
+                    minCategories[index_c] = Number(item[item_c]);
+                } else if (maxCategories[index_c] < Number(item[item_c])) {
+                    maxCategories[index_c] = Number(item[item_c]);
+                }
+            });
+
+        })
+    }
+
+    function getSteps() {
+        var inputValues = {};
+        data.columns.forEach(function (item) {
+            if (item.includes('in:')) {
+                inputValues[item] = []
+            }
+        });
+        data.forEach(function (item) {
+            data.columns.forEach(function (item_c) {
+                if (item_c.includes('in:')) {
+                    inputValues[item_c].push(item[item_c])
+                }
+            });
+        });
+        for (item in inputValues) {
+            uniqueCategories[item] = inputValues[item].filter(onlyUnique);
+        }
+    }
+
+    function onlyUnique(value, index, self) {
+        return self.indexOf(value) === index;
+    }
+
+    function triggerUpdate() {
+        getInValues();
+        var inputCurrent = inputToResults(data);
+        console.log(inputCurrent);
+        getOutValues(inputCurrent);
+        updateViewport(inputCurrent);
+
+    }
+
+    function getOutValues(dataItem) {
+        for (var i = 0; i < outCategories.length; i++) {
+            try {
+                var currentCat = inCategories[i];
+                var indexCat = allCategories.indexOf(currentCat);
+                outValues[i] = dataItem[indexCat];
+            } catch (e) {
+            }
+        }
+    }
+
+    function getInValues() {
+        inValues = [];
+        for (var i = 0; i < inCategories.length; i++) {
+            inValues.push($range[i].val());
+        }
+    }
+
+    function inputToResults(rawData) {
+        var resultSelected = null;
+        rawData.forEach(function (item) {
+            var boolCurrent = true;
+            inCategories.forEach(function (item_C) {
+                var index_Categrory = inCategories.indexOf(item_C);
+                boolCurrent = (boolCurrent && (item[item_C] === inValues[index_Categrory]));
+            });
+            if (boolCurrent === true) {
+                resultSelected = item;
+            }
+        });
+        return resultSelected;
+    }
+
+    function updateViewport(resultSelected) {
+        drawImage(resultSelected);
+        drawScores(resultSelected);
+
+    }
+
+    function drawScores(resultSelected) {
+        var widthScore = $("#output").width();
+        d3.selectAll("rect").remove();
+        for (var i = 0; i < outCategories.length; i++) {
+            var currentCat = outCategories[i];
+            var indexCat = allCategories.indexOf(currentCat);
+            if (resultSelected) {
+                var result = Number(resultSelected[currentCat]);
+            } else result = null;
+            drawOneScore(i, indexCat, result, widthScore);
+        }
+    }
+
+    function drawOneScore(i, indexCat, result, width) {
+        var classString = ".outputDiagram" + i;
+        if (result) {
+            var svg = d3.select("body")
+                .selectAll(classString)
+                .attr("width", width)
+                .attr("height", width * 2 / 50);
+            for (var x = 0; x < 10; x++) {
+                svg.append("rect")
+                    .attr("x", x * width / 10)
+                    .attr("y", 0)
+                    .attr("width", width * 4 / 50)
+                    .attr("height", width * 2 / 50)
+                    .attr("rx", 1)
+                    .attr("ry", 1)
+                    .attr("fill", "#f1f1f1")
+                    .attr("opacity", opacityGrade(x, indexCat, result));
+            }
+            $(classString).prev('h6').find('span').text(result);
+        } else $(classString).prev('h6').find('span').text('no data');
+    }
+
+    function opacityGrade(x, indexCat, value) {
+        var delta = maxCategories[indexCat] - minCategories[indexCat];
+        var increase = value - minCategories[indexCat];
+        var percentInt = Math.ceil((increase / delta) * 10);
+        if (x < percentInt) {
+            return (1);
+        } else {
+            return (.2);
+        }
+    }
+
+    function drawImage(resultSelected) {
+        if (resultSelected) {
+            var imageString = resultSelected.img;
+        } else imageString = 'no_data.png';
+        document.getElementById('img').src = 'img/' + imageString;
+    }
+</script>
+</html>

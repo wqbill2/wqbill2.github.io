@@ -1,0 +1,28 @@
+.white {
+    color: white;
+}
+
+.whiteLine {
+    border-color: white;
+}
+
+html, body {
+    min-height: 100%;
+}
+
+.grey {
+    background: grey;
+}
+
+.irs-grid-text {
+    color: white !important;
+}
+
+.back-red {
+    background: #ed5565;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-size: 10px;
+    line-height: 1.333;
+}
+
